@@ -1,0 +1,91 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2023, Luca Weiss <luca@z3ntu.xyz>
+ * Copyright (c) 2024, PoweredByPie
+ */
+
+/dts-v1/;
+
+#include "qcom-msm8226.dtsi"
+#include "pm8226.dtsi"
+
+/ {
+	model = "MSM 8926 A11UL";
+	compatible = "htc,a11ul", "qcom,msm8926-mtp", "qcom,msm8926", "qcom,mtp";
+	chassis-type = "handset";
+	htc,project-id = <325 0 0>, <325 1 0>, <325 2 0>, <325 128 0>, <325 0 0x10001>, <325 1 0x10001>, <325 2 0x10001>, <325 128 0x10001>;  /* <pid hw-version reserve> */
+	qcom,msm-id = <145 8 0>,
+		      <158 8 0>,
+		      <159 8 0>,
+		      <198 8 0>,
+		      <205 8 0>;
+
+	gpio-keys {
+		compatible = "gpio-keys";
+		// clr_gpio = <&tlmm 34 0>;
+
+		key-power {
+			label = "Power";
+			gpios = <&tlmm 106 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_POWER>;
+			wakeup-source = true;
+		};
+
+		key-volume-down {
+			label = "Volume Down";
+			gpios = <&tlmm 107 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_VOLUMEDOWN>;
+		};
+
+		key-volume-up {
+			label = "Volume Up";
+			gpios = <&tlmm 108 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_VOLUMEUP>;
+		};
+	};
+
+	/* Fix reserved-memory */
+};
+
+&blsp1_i2c2 {
+	status = "okay";
+
+	accelerometer@18 {
+		compatible = "bosch,bma250e";
+		reg = <0x18>;
+		interrupts-extended = <&tlmm 63 IRQ_TYPE_EDGE_RISING>;
+		vdd-supply = <&pm8226_l19>;
+		vddio-supply = <&pm8226_l27>;
+	}
+
+	/* Capella CM36686 Light sensor @ 0x60 */
+	/* TI TPS65132 Power supply @ 0x6C */
+};
+
+&blsp1_i2c5 {
+	status = "okay";
+
+	/* I'm not sure what this module does but it's an RMI4 device */
+	synaptics@20 {
+		compatible = "syna,rmi4-i2c";
+		reg = <0x20>;
+
+		interrupts-extended = <&tlmm 17 0x2008>;
+		vdd-supply = <&pm8226_l19>;
+	};
+
+	/* Himax 8528D @ 0x48
+         * There exists an HTC driver for this screen but its source seems ABYSMALLY bad (like 7000 lines of code ???)
+         */
+};
+
+&sdhc_2 {
+	vmmc-supply = <&pm8226_l18>;
+	vqmmc-supply = <&pm8226_l21>;
+
+	/* Unsure where this comes from */
+	bus-width = <4>;
+	cd-gpios = <&tlmm 38 GPIO_ACTIVE_LOW>;
+
+	status = "okay";
+};
